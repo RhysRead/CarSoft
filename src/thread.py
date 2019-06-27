@@ -19,11 +19,20 @@ class ThreadManager(object):
         ThreadManager.instance = self
         self.__threads = []
 
-    def add_task(self, task):
-        pass
+    def add_task(self, func, args: tuple, start=True):
+        thread = threading.Thread(target=func, args=args, daemon=True)
+        self.__threads.append(thread)
+        if start:
+            thread.start()
+        return thread
+
+    def check_threads(self, remove_complete=True):
+        for thread in self.__threads:
+            if not thread.is_alive() and remove_complete:
+                self.__threads.remove(thread)
 
     def start(self):
-        pass
+        for thread in self.__threads:
+            if not thread.is_alive():
+                thread.start()
 
-    def stop(self):
-        pass
