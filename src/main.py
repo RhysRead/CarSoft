@@ -18,10 +18,15 @@ class Main(object):
         self.__display_manager = DisplayManager()
         self.__thread_manager = ThreadManager()
 
+        logging.info('All managers initialised.')
+
     def start(self):
+        logging.info('Starting CarSoft...')
+
         # Starting managers
         self.__thread_manager.start()
 
+        logging.info('Finished starting. Displaying window on main thread.')
         # Beginning display manager on main thread
         self.__display_manager.start()
 

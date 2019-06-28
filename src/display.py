@@ -15,8 +15,10 @@ class DisplayManager(object):
         self.__root = tk.Tk()
         self.__root.pack_propagate(0)
         self.__root.resizable(0, 0)
+        # Initial geometry declaration
+        self.__root.geometry('1000x800+0+0')
 
-        self.__main_frame = MainFrame(self.__root)
+        self.__main_frame = MainFrame(self.__root, self)
 
         self.__current_frame_class: tk.Frame = None
 
@@ -32,8 +34,9 @@ class DisplayManager(object):
 
 
 class FrameClass(abc.ABC):
-    def __init__(self, root: tk.Tk):
+    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
         self._root = root
+        self._display_manager = display_manager
         self._frame = tk.Frame(self._root)
         self._create()
 
@@ -43,16 +46,18 @@ class FrameClass(abc.ABC):
     def pack_forget(self):
         self._frame.pack_forget()
 
+    def _load_main_frame(self):
+        self._display_manager.set_frame_class(MainFrame(self._root, self._display_manager))
+
     @abc.abstractmethod
     def _create(self):
         pass
 
 
 class MainFrame(FrameClass):
-    def __init__(self, root: tk.Tk):
-        super().__init__(root)
+    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
+        super().__init__(root, display_manager)
 
-        self._root.geometry('1000x800+0+0')
         self._geom = "{0}x{1}+0+0".format(
             self._root.winfo_screenwidth(), self._root.winfo_screenheight())
         self._full = False
@@ -75,7 +80,7 @@ class MainFrame(FrameClass):
         self.__button1 = tk.Button(self._frame,
                                    text='Live\nDisplay',
                                    font='Helvetica 17 bold',
-                                   command=None,  # Todo: Create live display
+                                   command=self.__load_live_display,  # Todo: Create live display
                                    width='10',
                                    height='5')
         self.__button1.grid(row=1, column=0, sticky=tk.E, padx=100)
@@ -83,7 +88,7 @@ class MainFrame(FrameClass):
         self.__button2 = tk.Button(self._frame,
                                    text='Media\nManager',
                                    font='Helvetica 17 bold',
-                                   command=None,  # Todo: Create media manager
+                                   command=self.__load_media_manager,  # Todo: Create media manager
                                    width='10',
                                    height='5')
         self.__button2.grid(row=1, column=1, sticky=tk.E, padx=100)
@@ -91,7 +96,7 @@ class MainFrame(FrameClass):
         self.__button3 = tk.Button(self._frame,
                                    text='Config\nManager',
                                    font='Helvetica 17 bold',
-                                   command=None,  # Todo: Create configuration manager
+                                   command=self.__load_config_manager,  # Todo: Create configuration manager
                                    width='10',
                                    height='5')
         self.__button3.grid(row=2, column=0, sticky=tk.E, padx=100)
@@ -106,6 +111,15 @@ class MainFrame(FrameClass):
                                    bg='Red')
         self.__button4.grid(row=2, column=1, sticky=tk.E, padx=100)
 
+    def __load_live_display(self):
+        self._display_manager.set_frame_class(LiveDisplayFrame(self._root, self._display_manager))
+
+    def __load_media_manager(self):
+        self._display_manager.set_frame_class(MediaManagerFrame(self._root, self._display_manager))
+
+    def __load_config_manager(self):
+        self._display_manager.set_frame_class(ConfigManagerFrame(self._root, self._display_manager))
+
     def __toggle_full_screen(self):
         # Toggling fullscreen attribute
         self._full = not self._full
@@ -118,3 +132,45 @@ class MainFrame(FrameClass):
         logging.info('Switching window size from {} to {}.'.format(geom, self._geom))
         self._root.geometry(self._geom)
         self._geom = geom
+
+
+class LiveDisplayFrame(FrameClass):
+    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
+        super().__init__(root, display_manager)
+
+    def _create(self):
+        self.__button0 = tk.Button(self._frame,
+                                   text='Main\nMenu',
+                                   font='Helvetica 17 bold',
+                                   command=self._load_main_frame,
+                                   width='10',
+                                   height='5')
+        self.__button0.grid(row=0, column=1, sticky=tk.E, padx=100)
+
+
+class MediaManagerFrame(FrameClass):
+    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
+        super().__init__(root, display_manager)
+
+    def _create(self):
+        self.__button0 = tk.Button(self._frame,
+                                   text='Main\nMenu',
+                                   font='Helvetica 17 bold',
+                                   command=self._load_main_frame,
+                                   width='10',
+                                   height='5')
+        self.__button0.grid(row=0, column=1, sticky=tk.E, padx=100)
+
+
+class ConfigManagerFrame(FrameClass):
+    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
+        super().__init__(root, display_manager)
+
+    def _create(self):
+        self.__button0 = tk.Button(self._frame,
+                                   text='Main\nMenu',
+                                   font='Helvetica 17 bold',
+                                   command=self._load_main_frame,
+                                   width='10',
+                                   height='5')
+        self.__button0.grid(row=0, column=1, sticky=tk.E, padx=100)
