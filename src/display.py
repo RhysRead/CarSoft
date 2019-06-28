@@ -55,16 +55,31 @@ class MainFrame(FrameClass):
         self._root.geometry('600x600+0+0')
         self._geom = "{0}x{1}+0+0".format(
             self._root.winfo_screenwidth(), self._root.winfo_screenheight())
+        self._full = False
 
     def _create(self):
-        self.__label0 = tk.Label(self._frame, text='CarSoft.', font=("Helvetica", 16))
+        self.__label0 = tk.Label(self._frame,
+                                 text='CarSoft.',
+                                 font='Helvetica 20 bold',
+                                 fg='Grey')
         self.__label0.grid(row=0, column=0)
 
-        self.__button0 = tk.Button(self._frame, text='Toggle Fullscreen', command=self.__toggle_full_screen)
-        self.__button0.grid(row=0, column=1)
+        self.__button0 = tk.Button(self._frame,
+                                   text='Toggle Fullscreen',
+                                   font='Helvetica 17 bold',
+                                   command=self.__toggle_full_screen,
+                                   width='10',
+                                   height='5')
+        self.__button0.grid(row=1, column=0)
 
     def __toggle_full_screen(self):
+        # Toggling fullscreen attribute
+        self._full = not self._full
+        self._root.attributes('-fullscreen', self._full)
+
+        # Toggling window geometry
         geom = self._root.winfo_geometry()
+        geom = geom.split('+')[0] + '+0+0'
         logging.info('Switching window size from {} to {}.'.format(geom, self._geom))
         self._root.geometry(self._geom)
         self._geom = geom
