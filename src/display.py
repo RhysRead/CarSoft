@@ -52,7 +52,7 @@ class MainFrame(FrameClass):
     def __init__(self, root: tk.Tk):
         super().__init__(root)
 
-        self._root.geometry('600x600+0+0')
+        self._root.geometry('1000x800+0+0')
         self._geom = "{0}x{1}+0+0".format(
             self._root.winfo_screenwidth(), self._root.winfo_screenheight())
         self._full = False
@@ -62,15 +62,49 @@ class MainFrame(FrameClass):
                                  text='CarSoft.',
                                  font='Helvetica 20 bold',
                                  fg='Grey')
-        self.__label0.grid(row=0, column=0)
+        self.__label0.grid(row=0, column=0, sticky=tk.W, padx=100)
 
         self.__button0 = tk.Button(self._frame,
-                                   text='Toggle Fullscreen',
+                                   text='Toggle\nFullscreen',
                                    font='Helvetica 17 bold',
                                    command=self.__toggle_full_screen,
                                    width='10',
                                    height='5')
-        self.__button0.grid(row=1, column=0)
+        self.__button0.grid(row=0, column=1, sticky=tk.E, padx=100)
+
+        self.__button1 = tk.Button(self._frame,
+                                   text='Live\nDisplay',
+                                   font='Helvetica 17 bold',
+                                   command=None,  # Todo: Create live display
+                                   width='10',
+                                   height='5')
+        self.__button1.grid(row=1, column=0, sticky=tk.E, padx=100)
+
+        self.__button2 = tk.Button(self._frame,
+                                   text='Media\nManager',
+                                   font='Helvetica 17 bold',
+                                   command=None,  # Todo: Create media manager
+                                   width='10',
+                                   height='5')
+        self.__button2.grid(row=1, column=1, sticky=tk.E, padx=100)
+
+        self.__button3 = tk.Button(self._frame,
+                                   text='Config\nManager',
+                                   font='Helvetica 17 bold',
+                                   command=None,  # Todo: Create configuration manager
+                                   width='10',
+                                   height='5')
+        self.__button3.grid(row=2, column=0, sticky=tk.E, padx=100)
+
+        self.__button4 = tk.Button(self._frame,
+                                   text='EXIT',
+                                   font='Helvetica 17 bold',
+                                   command=self._root.quit,
+                                   width='10',
+                                   height='5',
+                                   fg='White',
+                                   bg='Red')
+        self.__button4.grid(row=2, column=1, sticky=tk.E, padx=100)
 
     def __toggle_full_screen(self):
         # Toggling fullscreen attribute
@@ -79,6 +113,7 @@ class MainFrame(FrameClass):
 
         # Toggling window geometry
         geom = self._root.winfo_geometry()
+        # Replacing the position value of the window to fix a weird bug
         geom = geom.split('+')[0] + '+0+0'
         logging.info('Switching window size from {} to {}.'.format(geom, self._geom))
         self._root.geometry(self._geom)
