@@ -6,6 +6,7 @@ __author__ = "Rhys Read"
 __copyright__ = "Copyright 2019, Rhys Read"
 
 import logging
+import time
 
 from display import DisplayManager
 from thread import ThreadManager

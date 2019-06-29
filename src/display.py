@@ -158,7 +158,25 @@ class LiveDisplayFrame(FrameClass):
                                    command=self._load_main_frame,
                                    width='10',
                                    height='5')
-        self.__button0.grid(row=0, column=1, sticky=tk.E, padx=100)
+        self.__button0.grid(row=0, column=0, sticky=tk.E, padx=100)
+
+        self.__label0 = tk.Label(self._frame,
+                                 text='0\nMPH',
+                                 font='Helvetica 17 bold',
+                                 fg='Red',
+                                 width='10',
+                                 height='5',
+                                 bg='Grey')
+        self.__label0.grid(row=1, column=0, sticky=tk.W, padx=100, pady=50)
+
+        self.__label1 = tk.Label(self._frame,
+                                 text='0\nRPM',
+                                 font='Helvetica 17 bold',
+                                 fg='Red',
+                                 width='10',
+                                 height='5',
+                                 bg='Grey')
+        self.__label1.grid(row=1, column=1, sticky=tk.W, padx=100, pady=50)
 
 
 class MediaManagerFrame(FrameClass):
