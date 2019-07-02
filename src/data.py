@@ -10,11 +10,6 @@ import logging
 
 # Todo: Create software to manage car data
 
-
-class InterfaceManager(object):
+class DataManager(object):
     def __init__(self):
         pass
-
-    def pull_data(self):
-        pass
-

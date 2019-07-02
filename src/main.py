@@ -10,14 +10,16 @@ import time
 
 from display import DisplayManager
 from thread import ThreadManager
+from interface import InterfaceManager
 
 logging.basicConfig(level=logging.DEBUG)
 
 
 class Main(object):
     def __init__(self):
-        self.__display_manager = DisplayManager()
-        self.__thread_manager = ThreadManager()
+        self.__display_manager = DisplayManager(self)
+        self.thread_manager = ThreadManager()
+        self.interface_manager = InterfaceManager()
 
         logging.info('All managers initialised.')
 
@@ -25,7 +27,7 @@ class Main(object):
         logging.info('Starting CarSoft...')
 
         # Starting managers
-        self.__thread_manager.start()
+        self.thread_manager.start()
 
         logging.info('Finished starting. Displaying window on main thread.')
         # Beginning display manager on main thread

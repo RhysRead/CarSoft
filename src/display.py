@@ -8,10 +8,21 @@ __copyright__ = "Copyright 2019, Rhys Read"
 import logging
 import tkinter as tk
 import abc
+import time
+
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2TkAgg
+from matplotlib.figure import Figure
+
+# LiveDisplay frame update time in seconds:
+LIVE_DISPLAY_UPDATE = 0.01
 
 
 class DisplayManager(object):
-    def __init__(self):
+    def __init__(self, main):
+        self._main = main
+
         self.__root = tk.Tk()
         self.__root.pack_propagate(0)
         self.__root.resizable(0, 0)
@@ -20,7 +31,7 @@ class DisplayManager(object):
         self.__root.geometry(self.base_geometry)
         self.__root.attributes('-fullscreen', False)
 
-        self.__main_frame = MainFrame(self.__root, self)
+        self.__main_frame = MainFrame(self._main, self.__root, self)
 
         self.__current_frame_class: tk.Frame = None
 
@@ -39,20 +50,28 @@ class DisplayManager(object):
 
 
 class FrameClass(abc.ABC):
-    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
+    def __init__(self, main, root: tk.Tk, display_manager: DisplayManager):
+        self._main = main
         self._root = root
         self._display_manager = display_manager
         self._frame = tk.Frame(self._root)
+        self._active = False
         self._create()
 
     def pack(self):
         self._frame.pack()
+        self._active = True
 
     def pack_forget(self):
         self._frame.pack_forget()
+        self._active = False
 
     def _load_main_frame(self):
-        self._display_manager.set_frame_class(MainFrame(self._root, self._display_manager))
+        self._display_manager.set_frame_class(MainFrame(self._main, self._root, self._display_manager))
+        self._active = False
+
+    def is_active(self):
+        return self._active
 
     @abc.abstractmethod
     def _create(self):
@@ -60,8 +79,8 @@ class FrameClass(abc.ABC):
 
 
 class MainFrame(FrameClass):
-    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
-        super().__init__(root, display_manager)
+    def __init__(self, main, root: tk.Tk, display_manager: DisplayManager):
+        super().__init__(main, root, display_manager)
 
         window_geometry = clean_geometry(self._root.winfo_geometry())
 
@@ -124,13 +143,13 @@ class MainFrame(FrameClass):
         self.__button4.grid(row=2, column=1, sticky=tk.E, padx=100)
 
     def __load_live_display(self):
-        self._display_manager.set_frame_class(LiveDisplayFrame(self._root, self._display_manager))
+        self._display_manager.set_frame_class(LiveDisplayFrame(self._main, self._root, self._display_manager))
 
     def __load_media_manager(self):
-        self._display_manager.set_frame_class(MediaManagerFrame(self._root, self._display_manager))
+        self._display_manager.set_frame_class(MediaManagerFrame(self._main, self._root, self._display_manager))
 
     def __load_config_manager(self):
-        self._display_manager.set_frame_class(ConfigManagerFrame(self._root, self._display_manager))
+        self._display_manager.set_frame_class(ConfigManagerFrame(self._main, self._root, self._display_manager))
 
     def __toggle_full_screen(self):
         # Toggling window geometry
@@ -148,8 +167,10 @@ class MainFrame(FrameClass):
 
 
 class LiveDisplayFrame(FrameClass):
-    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
-        super().__init__(root, display_manager)
+    def __init__(self, main, root: tk.Tk, display_manager: DisplayManager):
+        super().__init__(main, root, display_manager)
+
+        self.__live_update_thread = None
 
     def _create(self):
         self.__button0 = tk.Button(self._frame,
@@ -178,10 +199,54 @@ class LiveDisplayFrame(FrameClass):
                                  bg='Grey')
         self.__label1.grid(row=1, column=1, sticky=tk.W, padx=100, pady=50)
 
+        # Todo: Spaghetti code
+        self.__figure0 = Figure(figsize=(5, 5), dpi=100)
+        self.__figure0.gca().set_xlim([-5, 0])
+        self.__graph0data = self.__figure0.add_subplot(111)
+        self.__graph0canvas = FigureCanvasTkAgg(self.__figure0, self._frame)
+        self.__graph0canvas.show()
+        self.__graph0 = self.__graph0canvas.get_tk_widget()
+        self.__graph0.grid(row=2, column=0)
+
+    def update_displays(self, mph: float, rpm: float):
+        self.__label0.config(text=mph)
+        self.__label1.config(text=rpm)
+        self._root.update()
+
+    def update_mph_graph(self, mph_list_x: list, mph_list_y: list):
+        # Todo: Spaghetti code
+        self.__graph0data.plot(mph_list_x, mph_list_y)
+        self.__graph0.grid_forget()
+        self.__graph0canvas = FigureCanvasTkAgg(self.__figure0, self._frame)
+        self.__graph0 = self.__graph0canvas.get_tk_widget()
+        self.__graph0.show()
+        self.__graph0.get_tk_widget().grid(row=2, column=0)
+
+    # Overriding the pack method for the sake of starting a parallel thread when packed
+    def pack(self):
+        self._frame.pack()
+        self._active = True
+        # Todo: Finish the next line and work from there.
+        self._main.thread_manager.add_task(update_displays_thread, (self._main, self))
+
+
+def update_displays_thread(main, live_display: LiveDisplayFrame):
+    logging.info('Beginning live display update cycle.')
+    mph = 0
+    rpm = 0
+    while live_display.is_active():
+        # Demo of change until correct data can be pulled.
+        # mph, rpm = main.interface_manager.pull_data()
+        mph += 1
+        rpm += 1
+        live_display.update_displays(mph, rpm)
+        time.sleep(LIVE_DISPLAY_UPDATE)
+    logging.info('Ending live display update cycle.')
+
 
 class MediaManagerFrame(FrameClass):
-    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
-        super().__init__(root, display_manager)
+    def __init__(self, main, root: tk.Tk, display_manager: DisplayManager):
+        super().__init__(main, root, display_manager)
 
     def _create(self):
         self.__button0 = tk.Button(self._frame,
@@ -194,8 +259,8 @@ class MediaManagerFrame(FrameClass):
 
 
 class ConfigManagerFrame(FrameClass):
-    def __init__(self, root: tk.Tk, display_manager: DisplayManager):
-        super().__init__(root, display_manager)
+    def __init__(self, main, root: tk.Tk, display_manager: DisplayManager):
+        super().__init__(main, root, display_manager)
 
     def _create(self):
         self.__button0 = tk.Button(self._frame,

@@ -15,5 +15,5 @@ class InterfaceManager(object):
         pass
 
     def pull_data(self):
-        pass
+        return None, None
 
