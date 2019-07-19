@@ -9,6 +9,7 @@ import logging
 import tkinter as tk
 import abc
 import time
+import random
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -170,6 +171,9 @@ class LiveDisplayFrame(FrameClass):
     def __init__(self, main, root: tk.Tk, display_manager: DisplayManager):
         super().__init__(main, root, display_manager)
 
+        self.mph_list = []
+        self.rpm_list = []
+
         self.__live_update_thread = None
 
     def _create(self):
@@ -184,7 +188,7 @@ class LiveDisplayFrame(FrameClass):
         self.__label0 = tk.Label(self._frame,
                                  text='0\nMPH',
                                  font='Helvetica 17 bold',
-                                 fg='Red',
+                                 fg='Blue',
                                  width='10',
                                  height='5',
                                  bg='Grey')
@@ -204,23 +208,44 @@ class LiveDisplayFrame(FrameClass):
         self.__figure0.gca().set_xlim([-5, 0])
         self.__graph0data = self.__figure0.add_subplot(111)
         self.__graph0canvas = FigureCanvasTkAgg(self.__figure0, self._frame)
-        self.__graph0canvas.show()
+        self.__graph0canvas.draw()
         self.__graph0 = self.__graph0canvas.get_tk_widget()
         self.__graph0.grid(row=2, column=0)
 
-    def update_displays(self, mph: float, rpm: float):
-        self.__label0.config(text=mph)
-        self.__label1.config(text=rpm)
+        self.__figure1 = Figure(figsize=(5, 5), dpi=100)
+        self.__figure1.gca().set_xlim([-5, 0])
+        self.__graph1data = self.__figure1.add_subplot(111)
+        self.__graph1canvas = FigureCanvasTkAgg(self.__figure1, self._frame)
+        self.__graph1canvas.draw()
+        self.__graph1 = self.__graph1canvas.get_tk_widget()
+        self.__graph1.grid(row=2, column=1)
+
+    def update_displays(self):
+        self.__label0.config(text=str(self.mph_list[-1]) + ' MPH')
+        self.__label1.config(text=str(self.rpm_list[-1]) + ' RPM')
         self._root.update()
 
-    def update_mph_graph(self, mph_list_x: list, mph_list_y: list):
+    def update_mph_graph(self):
         # Todo: Spaghetti code
-        self.__graph0data.plot(mph_list_x, mph_list_y)
-        self.__graph0.grid_forget()
-        self.__graph0canvas = FigureCanvasTkAgg(self.__figure0, self._frame)
-        self.__graph0 = self.__graph0canvas.get_tk_widget()
-        self.__graph0.show()
-        self.__graph0.get_tk_widget().grid(row=2, column=0)
+        # Todo: Tweak range of numbers in number iterator array to reflect timescale of mph over past 5 seconds
+        # Todo: Make it so that each plot is added one at a time instead of adding all at once
+        for line in self.__graph0data.get_lines():
+            line.remove()
+            del line
+        self.__graph0data.plot([i / 10 for i in range(0, -(len(self.mph_list)), -1)], self.mph_list[::-1], color='blue')
+        self.__graph0canvas.draw()
+        self.__graph0.update()
+
+    def update_rpm_graph(self):
+        # Todo: Spaghetti code
+        # Todo: Tweak range of numbers in number iterator array to reflect timescale of mph over past 5 seconds
+        # Todo: Make it so that each plot is added one at a time instead of adding all at once
+        for line in self.__graph1data.get_lines():
+            line.remove()
+            del line
+        self.__graph1data.plot([i / 10 for i in range(0, -(len(self.rpm_list)), -1)], self.rpm_list[::-1], color='red')
+        self.__graph1canvas.draw()
+        self.__graph1.update()
 
     # Overriding the pack method for the sake of starting a parallel thread when packed
     def pack(self):
@@ -235,11 +260,15 @@ def update_displays_thread(main, live_display: LiveDisplayFrame):
     mph = 0
     rpm = 0
     while live_display.is_active():
+        live_display.mph_list.append(mph)
+        live_display.rpm_list.append(rpm)
         # Demo of change until correct data can be pulled.
         # mph, rpm = main.interface_manager.pull_data()
-        mph += 1
-        rpm += 1
-        live_display.update_displays(mph, rpm)
+        mph += random.randint(-3, 3)
+        rpm += random.randint(-100, 100)
+        live_display.update_displays()
+        live_display.update_mph_graph()
+        live_display.update_rpm_graph()
         time.sleep(LIVE_DISPLAY_UPDATE)
     logging.info('Ending live display update cycle.')
 
